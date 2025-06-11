@@ -1,9 +1,69 @@
 local kr8_cluster = std.extVar('kr8_cluster');
 local kube = import 'kube-libsonnet/kube.libsonnet';
 {
+  Argo_App(component, name, config): kube._Object('argoproj.io/v1alpha1', 'Application', std.asciiLower(std.strReplace(name, '_', '-'))) {
+    metadata+: {
+      namespace: 'argocd',
+      labels: {
+        'app.argoproj.io/name': std.asciiLower(std.strReplace(name, '_', '-')),
+        'app.argoproj.io/cluster': kr8_cluster.name,
+        'app.argoproj.io/tier': config.tier,
+      },
+    },
+    spec+: {
+      destination: {
+        server: 'https://kubernetes.default.svc',
+        namespace: (if 'namespace' in config then config.namespace else kr8_cluster.name + '-' + config.tier),
+      },
+      project: kr8_cluster.name + '-' + config.tier,
+      sources: [] +
+               (
+                 if 'chart' in config.deployment then
+                   if std.isArray(config.deployment.chart) then [
+                     {
+                       repoURL: cht.repoURL,
+                       targetRevision: cht.targetRevision,
+                       helm: (if 'values' in cht then { valuesObject: cht.values } else {}) +
+                             (if 'parameters' in cht then { parameters: cht.parameters } else {}),
+                     } + (if 'chart' in cht then { chart: cht.chart } else { path: cht.path })
+                     for cht in config.deployment.chart
+                   ] else [
+                     {
+                       local cht = config.deployment.chart,
+                       repoURL: cht.repoURL,
+                       targetRevision: cht.targetRevision,
+                       helm: (if 'values' in cht then { valuesObject: cht.values } else {}) +
+                             (if 'parameters' in config.deployment.chart then { parameters: config.deployment.chart.parameters } else {}),
+                     } + (
+                       if 'chart' in config.deployment.chart then { chart: config.deployment.chart.chart } else { path: config.deployment.chart.path }
+                     ),
+                   ]
+                 else []
+               ) +
+               (
+                 if 'kube' in config.deployment then
+                   [{
+                     repoURL: kr8_cluster.meta.repo,
+                     targetRevision: kr8_cluster.meta.ref,
+                     path: std.join('/', [kr8_cluster.meta.path, component]),
+                   }]
+                 else []
+               ),
+      syncPolicy: {
+        automated: {
+          prune: true,
+          selfHeal: true,
+        },
+      },
+      info: [{ name: 'Base Domain', value: kr8_cluster.base_domain }] + [
+        ({ name: ref.name, value: ref.value })
+        for ref in config.references
+      ],
+    },
+  },
   Argo_App_Project(tier): kube._Object('argoproj.io/v1alpha1', 'AppProject', kr8_cluster.name + '-' + tier) {
     metadata+: {
-      namespace: 'argo',
+      namespace: 'argocd',
       finalizers: ['resources-finalizer.argocd.argoproj.io'],
     },
     spec+: {
