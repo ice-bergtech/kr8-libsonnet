@@ -27,7 +27,13 @@
         } + (if 'references' in service && std.length(service.references) > 0 then {
           [std.strReplace(ref.name, ' ', '_')]: ref.value
           for ref in service.references
-        } else {}),
+        } else {}) + (
+          if 'ingress' in service.deployment.compose && service.deployment.compose.ingress == 'caddy' then {
+            'caddy': "*.${STACK_DOMAIN}",
+            ['caddy.1_@'+service.release_name]: 'host '+service.interfaces[0].subdomain+'.${STACK_DOMAIN}',
+            'caddy.1_handle': "@"+service.release_name,
+            'caddy.1_handle.reverse_proxy': "{{upstreams "+service.interfaces[0].port+"}}",
+          } else {}),
       },
     },
     volumes: (if 'backup' in service then {

@@ -4,6 +4,7 @@ local certs = import 'kube-certs.libsonnet';
 local argo = import 'kube-argo.libsonnet';
 local kr8Component = import 'kr8-component.libsonnet';
 local kr8Kube = import 'kr8-kube.libsonnet';
+local kubeComponent = import 'kube-component.libsonnet';
 
 {
   Version(): about.version,
@@ -22,6 +23,7 @@ local kr8Kube = import 'kr8-kube.libsonnet';
   ArgoAppProj(tier): argo.Argo_App_Project(tier),
 
   Namespace(name, labels): kr8Kube.Namespace(name, labels),
+  SealedSecret(name, namespace, data, namespace_wide): kubeComponent.sealed_secret(name, namespace, data, namespace_wide),
 
   Kr8CmpRenderComponent(config) : kr8Component.RenderComponent(config),
 }
