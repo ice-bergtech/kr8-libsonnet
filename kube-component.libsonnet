@@ -57,6 +57,7 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
                   std.map(function(d) ({name: std.strReplace(d.name, '_', '-'), mountPath: d.dir}), config.backup)
                 else []
               ),
+              env: (if 'env' in config.deployment.kube then config.deployment.kube.env else []),
               securityContext: (if 'user' in config.deployment.kube then {runAsUser: config.deployment.kube.user} else {}) + 
               (if 'runAsNonRoot' in config.deployment.kube then {runAsNonRoot: config.deployment.kube.runAsNonRoot} else {runAsNonRoot: true}) + 
               (if 'readOnlyRootFilesystem' in config.deployment.kube then {readOnlyRootFilesystem: config.deployment.kube.readOnlyRootFilesystem} else {readOnlyRootFilesystem: true}),
@@ -103,7 +104,7 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
       encryptedData: data,
     },
   },
-  configmap(config, key): kube.ConfigMap(key) {
+  Configmap(config, key): kube.ConfigMap(key) {
     data+: {
       [key]: config.configmaps[key],
     },
