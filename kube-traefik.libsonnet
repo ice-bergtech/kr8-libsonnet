@@ -1,4 +1,3 @@
-
 local kube = import 'kube-libsonnet/kube.libsonnet';
 
 {
@@ -76,7 +75,8 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
       entryPoints: ['websecure'],
       routes: [
         {
-          match: 'Host(`' + interface.subdomain + '.' + base_domain + '`)' + (if 'path' in interface then ' && PathPrefix(`' + interface.path + '`)' else ''),
+          match: if 'match' in interface then interface.match else
+            'Host(`' + interface.subdomain + '.' + base_domain + '`)' + (if 'path' in interface then ' && PathPrefix(`' + interface.path + '`)' else ''),
           kind: 'Rule',
           priority: interface.priority,
           //middlewares: std.map(function(m) ({ name: m.metadata.name }), interfaces[0].middlewares),
@@ -84,7 +84,7 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
             {
               name: interface.service,
               port: interface.port,
-            },
+            } + if 'scheme' in interface then interface.scheme else {},
           ],
         }
         for interface in interfaces

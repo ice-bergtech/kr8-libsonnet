@@ -32,7 +32,7 @@ local dc = import 'simple-docker-compose.libsonnet';
       ] +
       def_middlewares
     else [])) +
-    (if 'namespace' in interface && !std.objectHas(kr8_cluster.tiers, interface.namespace) then [
+    (if (!('cert' in interface) || interface.cert) && 'namespace' in interface && !std.objectHas(kr8_cluster.tiers, interface.namespace) then [
       certs.KubeCert(kr8_cluster, config.tier, interface.namespace, (if 'domain' in kr8_cluster.tiers[config.tier] then kr8_cluster.tiers[config.tier].domain else kr8_cluster.base_domain))
     ] else [])
   ),
