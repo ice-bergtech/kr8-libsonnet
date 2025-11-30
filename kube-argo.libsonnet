@@ -27,7 +27,8 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
                              (if 'parameters' in cht then { parameters: cht.parameters } else {}),
                      } + (if 'chart' in cht then { chart: cht.chart } else { path: cht.path })
                      for cht in config.deployment.chart
-                   ] else [
+                     if !('enabled' in cht) || ('enabled' in cht && cht.enabled == true)
+                   ] else if !('enabled' in config.deployment.chart) || ('enabled' in config.deployment.chart && config.deployment.chart.enabled == true) then [
                      {
                        local cht = config.deployment.chart,
                        repoURL: cht.repoURL,
@@ -37,7 +38,7 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
                      } + (
                        if 'chart' in config.deployment.chart then { chart: config.deployment.chart.chart } else { path: config.deployment.chart.path }
                      ),
-                   ]
+                   ] else []
                  else []
                ) +
                (
