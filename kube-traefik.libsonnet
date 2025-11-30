@@ -1,7 +1,7 @@
 local kube = import 'kube-libsonnet/kube.libsonnet';
 
 {
-  TraefikTLSIssuer(domain, component, provider): kube._Object('traefik.containo.us/v1alpha1', 'TLSStore', std.join('-', ['tlsstore', provider.name, std.strReplace(domain, '.', '-')]),) {
+  TraefikTLSIssuer(domain, component, provider): kube._Object('traefik.io/v1alpha1', 'TLSStore', std.join('-', ['tlsstore', provider.name, std.strReplace(domain, '.', '-')]),) {
     metadata+: { namespace: 'cert-manager' },
     spec+: {
       defaultCertificate: {
@@ -31,7 +31,7 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
       },
     },
   },
-  TraefikIngressRoute(component, interface, base_domain): kube._Object('traefik.containo.us/v1alpha1', 'IngressRoute', std.join('-', [component.release_name, interface.service, 'fe'])) {
+  TraefikIngressRoute(component, interface, base_domain): kube._Object('traefik.io/v1alpha1', 'IngressRoute', std.join('-', [component.release_name, interface.service, 'fe'])) {
     metadata+: {
       annotations: {
         'external-dns.alpha.kubernetes.io/hostname': '*.' + base_domain,
@@ -62,7 +62,7 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
     },
   },
 
-  TraefikCombineIngressRoute(component, interfaces, base_domain): kube._Object('traefik.containo.us/v1alpha1', 'IngressRoute', std.join('-', [component.release_name, interfaces[0].service, 'fe'])) {
+  TraefikCombineIngressRoute(component, interfaces, base_domain): kube._Object('traefik.io/v1alpha1', 'IngressRoute', std.join('-', [component.release_name, interfaces[0].service, 'fe'])) {
     metadata+: {
       annotations: {
         'external-dns.alpha.kubernetes.io/hostname': '*.' + base_domain,
