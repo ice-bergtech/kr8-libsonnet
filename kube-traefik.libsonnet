@@ -21,7 +21,7 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
   TraefikMiddlewareIPAllowlist(component, interface, defaultRanges): kube._Object('traefik.io/v1alpha1', 'Middleware', component.release_name + '-ipallowlist-middleware') {
     metadata+: (if 'namespace' in interface then { namespace: interface.namespace } else {}),
     spec+: {
-      ipWhiteList: {
+      ipAllowList: {
         sourceRange: (
           if 'ranges' in interface then
             interface.ranges
