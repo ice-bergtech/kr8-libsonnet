@@ -20,18 +20,22 @@ local dc = import 'simple-docker-compose.libsonnet';
   ),
   // TODO: add option to allow insecure on 80
   GenerateInterface(config, interface): (
-    local def_middlewares = [
-      kr8_lib.TraefikMiddlewareIPAllowlist(config, interface, kr8_cluster.tiers[config.tier].network.ranges_ingress),
-      kr8_lib.TraefikMiddlewareHttpUpgrade(config, interface)
-    ];
-    (if 'middlewares' in interface then interface.middlewares + [
-      kr8_lib.TraefikIngressRoute(config, interface, kr8_cluster.base_domain)
-    ] else
-    (if interface.type == 'http' then [
+    local def_middlewares = (
+      if 'middlewares' in interface then interface.middlewares 
+      else [
+        kr8_lib.TraefikMiddlewareIPAllowlist(config, interface, kr8_cluster.tiers[config.tier].network.ranges_ingress),
+        kr8_lib.TraefikMiddlewareHttpUpgrade(config, interface)
+      ]
+    );
+    (
+      if interface.type == 'http' then [
         kr8_lib.TraefikIngressRoute(config, interface{middlewares+:def_middlewares}, kr8_cluster.base_domain)
-      ] +
+      ] + 
       def_middlewares
-    else [])) +
+    else if interface.type == 'tcp' then []
+    else if interface.type == 'udp' then []
+    else []
+    ) +
     (if (!('cert' in interface) || interface.cert) && 'namespace' in interface && !std.objectHas(kr8_cluster.tiers, interface.namespace) then [
       certs.KubeCert(kr8_cluster, config.tier, interface.namespace, (if 'domain' in kr8_cluster.tiers[config.tier] then kr8_cluster.tiers[config.tier].domain else kr8_cluster.base_domain))
     ] else [])
