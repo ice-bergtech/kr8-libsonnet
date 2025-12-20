@@ -44,12 +44,14 @@ local dc = import 'simple-docker-compose.libsonnet';
   ),
 
   ProcessCompose(config):
+    if 'deployment' in config && 'compose' in config.deployment then (
+    if !('enabled' in config.deployment.compose) || config.deployment.compose.enabled then 
     (
       if 'generate' in config.deployment.compose && config.deployment.compose.generate then
         dc.generate_compose(config)
       else
         [std.parseYaml(config.deployment.compose.file)]
-    ),
+    ) else [] ) else [],
 }
 
 
