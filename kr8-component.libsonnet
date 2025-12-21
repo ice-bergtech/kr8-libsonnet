@@ -1,7 +1,7 @@
 local kcomp = import 'kube-component.libsonnet';
 local kr8_cluster = std.extVar('kr8_cluster');
 local kr8_lib = import 'kube-traefik.libsonnet';
-local kube_net = import 'kube-network.libsonnet';
+local kube_net = import 'kube-networking.libsonnet';
 local certs = import 'kube-certs.libsonnet';
 local dc = import 'simple-docker-compose.libsonnet';
 
@@ -33,7 +33,7 @@ local dc = import 'simple-docker-compose.libsonnet';
       kr8_lib.TraefikIngressRoute(config, interface{middlewares+:def_middlewares}, kr8_cluster.base_domain)
     ] else if interface.type == 'tcp' || interface.type == 'udp' then [
       # node port
-      kube_net.NodePort(config, interface, kr8_cluster.base_domain)
+      kube_net.KubeNodePort(config, interface, kr8_cluster.base_domain)
     ] else []
     ) +
     (if (!('cert' in interface) || interface.cert) && 'namespace' in interface && !std.objectHas(kr8_cluster.tiers, interface.namespace) then [
