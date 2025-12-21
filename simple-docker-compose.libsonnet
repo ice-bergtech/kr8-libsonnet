@@ -16,8 +16,13 @@
             if int.type == 'http'
           ] else []
         ),
-        networks: ['service_net_' + service.release_name]
-                  + if 'interfaces' in service then ['service_net_' + service.tier] else [],
+        networks: ['service_net_' + service.release_name] +
+          if 'interfaces' in service then [
+            (intf.network)
+            for intf in service.interfaces
+            if 'network' in intf
+          ] + ['service_net_' + service.tier] 
+          else [],
         environment: {
           UID: '1000',
           GID: '1000',
@@ -34,7 +39,13 @@
             'caddy.1_handle': "@"+service.release_name,
             'caddy.1_handle.reverse_proxy': "{{upstreams "+service.interfaces[0].port+"}}",
           } else {}),
-      },
+      } + if 'interfaces' in service then {
+        ports: [
+            int.externalPort + ":" + int.port + "/" + int.type
+            for int in service.interfaces
+            if int.type == 'tcp' || int.type == 'udp'
+          ]
+      } else {},
     },
     volumes: (if 'backup' in service then {
                 [vol.name]: {}
@@ -47,6 +58,11 @@
         ['service_net_' + service.tier]: { external: true },
       }
       else {}
+    ) + (if 'interfaces' in service && std.length(service.interfaces) > 0 then {
+        [intf.network]: {external: true },
+        for intf in service.interfaces
+        if 'network' in intf
+      } else {}
     ),
   }],
   render_compose(service): [std.parseYaml(std.extVar('compose'))],
