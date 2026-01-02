@@ -53,9 +53,10 @@ local dc = import 'simple-docker-compose.libsonnet';
     (
       if 'generate' in config.deployment.compose && config.deployment.compose.generate then
         dc.generate_compose(config)
-      else
+      else if 'file' in config.deployment.compose then
         [std.parseYaml(config.deployment.compose.file)]
-    ) else [] ) else [],
+      else []
+    ),
 }
 
 
