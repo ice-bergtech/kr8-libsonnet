@@ -9,6 +9,7 @@
             for vol in service.backup
           ] else []
         ),
+        restart: (if 'restart' in service.deployment.compose then service.deployment.compose.restart else 'unless-stopped'),
         expose: (
           if 'interfaces' in service then [
             (if 'port' in int then int.port else '80')
