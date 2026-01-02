@@ -41,8 +41,8 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
       },
     } + (if 'namespace' in interface then { namespace: interface.namespace } else {}),
     spec+: {
-      entryPoints: ['websecure'],
-      routes: [{
+      entryPoints: (if 'entryPoints' in interface then interface.entryPoints else ['websecure']),
+      routes: (if 'routes' in interface then interface.routes else [{
         match: 'Host(`' + interface.subdomain + '.' + base_domain + '`)',
         kind: 'Rule',
         priority: 10,
@@ -50,8 +50,8 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
         services: [{
           name: interface.service,
           port: interface.port,
-        }],
-      }],
+        }]
+      }]),
       tls: {
         domains: [{
           main: base_domain,
