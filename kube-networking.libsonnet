@@ -5,8 +5,7 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
     metadata+: {
       annotations: {
         'external-dns.alpha.kubernetes.io/hostname': '*.' + base_domain,
-        'link.argocd.argoproj.io/external-link': interface.subdomain + '.' + base_domain,
-      },
+      } + (if 'subdomain' in interface then {'link.argocd.argoproj.io/external-link': interface.subdomain + '.' + base_domain} else {}),
     } + (if 'namespace' in interface then { namespace: interface.namespace } else {}),
     spec+: {
       type: 'NodePort',

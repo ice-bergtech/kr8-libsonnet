@@ -61,16 +61,14 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
               securityContext: (if 'user' in config.deployment.kube then {runAsUser: config.deployment.kube.user} else {}) + 
               (if 'runAsNonRoot' in config.deployment.kube then {runAsNonRoot: config.deployment.kube.runAsNonRoot} else {runAsNonRoot: true}) + 
               (if 'readOnlyRootFilesystem' in config.deployment.kube then {readOnlyRootFilesystem: config.deployment.kube.readOnlyRootFilesystem} else {readOnlyRootFilesystem: true}),
-              resources: {
-                requests: {
-                  memory: '64Mi',
-                  cpu: '250m',
-                },
-                limits: {
-                  memory: '256Mi',
-                  cpu: '500m',
-                },
-              },
+              resources: (
+                if 'resources' in config.deployment.kube then
+                  config.deployment.kube.resources
+                else {
+                  requests: { memory: '64Mi', cpu: '100m' },
+                  limits: { memory: '256Mi', cpu: '500m' },
+                }
+              ),
             },
           ],
           volumes: [] + (

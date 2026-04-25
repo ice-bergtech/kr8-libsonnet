@@ -37,13 +37,16 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
         'external-dns.alpha.kubernetes.io/hostname': '*.' + base_domain,
         // todo: parameterize off of cert-manager config
         'cert-manager.io/cluster-issuer': std.join('-', ['issuer-letsencrypt-production', std.strReplace(base_domain, '.', '-')]),
-        'link.argocd.argoproj.io/external-link': 'https://' + interface.subdomain + '.' + base_domain,
-      },
+      } + (if 'subdomain' in interface then {'link.argocd.argoproj.io/external-link': 'https://' + interface.subdomain + '.' + base_domain} else {}),
     } + (if 'namespace' in interface then { namespace: interface.namespace } else {}),
     spec+: {
       entryPoints: (if 'entryPoints' in interface then interface.entryPoints else ['websecure']),
-      routes: (if 'routes' in interface then interface.routes else [{
-        match: 'Host(`' + interface.subdomain + '.' + base_domain + '`)',
+      routes: (if 'routes' in interface then interface.routes else [
+        (if 'subdomain' in interface then 
+          {match: 'Host(`' + interface.subdomain + '.' + base_domain + '`)'}
+          else
+          {match: 'Host(`' + base_domain + '`)'}
+        ) + {
         kind: 'Rule',
         priority: 10,
         middlewares: std.map(function(m) ({ name: m.metadata.name }), interface.middlewares),
@@ -68,8 +71,7 @@ local kube = import 'kube-libsonnet/kube.libsonnet';
         'external-dns.alpha.kubernetes.io/hostname': '*.' + base_domain,
         // todo: parameterize off of cert-manager config
         'cert-manager.io/cluster-issuer': std.join('-', ['issuer-letsencrypt-production', std.strReplace(base_domain, '.', '-')]),
-        'link.argocd.argoproj.io/external-link': 'https://' + interfaces[0].subdomain + '.' + base_domain,
-      },
+      } + (if 'subdomain' in interfaces[0] then {'link.argocd.argoproj.io/external-link': 'https://' + interfaces[0].subdomain + '.' + base_domain} else {}),
     } + (if 'namespace' in interfaces[0] then { namespace: interfaces[0].namespace } else {}),
     spec+: {
       entryPoints: ['websecure'],
