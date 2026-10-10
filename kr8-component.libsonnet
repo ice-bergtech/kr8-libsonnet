@@ -21,16 +21,18 @@ local dc = import 'simple-docker-compose.libsonnet';
   ),
   // TODO: add option to allow insecure on 80
   GenerateInterface(config, interface): (
-    local def_middlewares = (
+    local def_middlewares = std.filter(function(m) m != null, (
       if 'middlewares' in interface then interface.middlewares
       else [
         kr8_lib.TraefikMiddlewareIPAllowlist(config, interface, kr8_cluster.tiers[config.tier].network.ranges_ingress),
-        kr8_lib.TraefikMiddlewareHttpUpgrade(config, interface),
+        if !('cert' in interface) || interface.cert then
+          kr8_lib.TraefikMiddlewareHttpUpgrade(config, interface)
+        else null,
       ]
-    );
+    ));
     (
-      if interface.type == 'http' then def_middlewares + [
-        kr8_lib.TraefikIngressRoute(config, interface { middlewares+: def_middlewares }, kr8_cluster.base_domain),
+      if interface.type == 'http' then std.filter(function(m) m != null, def_middlewares) + [
+        kr8_lib.TraefikIngressRoute(config, interface { middlewares: def_middlewares }, kr8_cluster.base_domain),
       ] else if interface.type == 'tcp' || interface.type == 'udp' then [
         // node port
         kube_net.KubeNodePort(config, interface, kr8_cluster.base_domain),
